@@ -1,11 +1,34 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import personService from './services/persons.js'
+import './App.css'
+
+const Notification = ({ message }) => {
+  if (message === null) {
+    return null
+  }
+
+  return (
+    <div className='error'>
+      {message}
+    </div>
+  )
+}
 
 const People = ({ people }) => {
+  const deletePerson = (event) => {
+    if (window.confirm('Delete this person From the phonebook?')) {
+      personService
+        .remove(event.target.value)
+        .then(response => console.log(response))
+    }
+
+  }
   return (
     people.map(person => {
       return (
-        <p>{person.name} {person.number}</p>
+        <>
+          <p>{person.name} {person.number}</p><button onClick={deletePerson} value={person.id}>delete</button>
+        </>
       )
     })
   )
@@ -23,10 +46,18 @@ const AddPerson = ({ persons, setPersons, setPeopleDisplay }) => {
     event.preventDefault()
     console.log()
     if (checkNameExists(newPerson.name)) {
-      alert(`${newPerson.name} is already added to phonebook`)
+      if (window.confirm(`${newPerson.name} is already added to phonebook, replace the old number with a new one?`)) {
+        const personToUpdate = persons.find(person => person.name === newPerson.name)
+        personService
+          .update(newPerson, personToUpdate.id)
+          .then(reponse => console.log(reponse))
+      }
     } else {
       setPersons(persons.concat(newPerson))
-      setPeopleDisplay(persons)
+      setPeopleDisplay(persons.concat(newPerson))
+      personService
+        .create(newPerson)
+        .then(response => console.log(response))
     }
     setNewPerson(
       {
@@ -37,7 +68,7 @@ const AddPerson = ({ persons, setPersons, setPeopleDisplay }) => {
   }
 
   const checkNameExists = (name) => {
-    return ((persons.filter(person => person.name.toLowerCase() === name.toLowerCase())).length > 0)
+    return ((persons.find(person => person.name === name)) != null)
   }
 
   const handleNameChange = (event) => {
@@ -61,7 +92,7 @@ const AddPerson = ({ persons, setPersons, setPeopleDisplay }) => {
         number: <input value={newPerson.number} onChange={handleNumberChange} />
       </div>
       <div>
-        <button type="submit">add</button>
+        <button type="submit">Add Person</button>
       </div>
     </form>
   )
@@ -85,12 +116,12 @@ const Search = ({ persons, setPeopleDisplay }) => {
 
 const App = () => {
   const [persons, setPersons] = useState([])
-
+  const [errorMessage, setErrorMessage] = useState('')
   const [peopleDisplay, setPeopleDisplay] = useState([])
 
   useEffect(() => {
-    axios
-      .get('http://localhost:3001/persons')
+    personService
+      .getAll()
       .then(response => {
         response = response.data
         setPersons(response)
@@ -101,10 +132,11 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={errorMessage} />
       <h2>Search</h2>
       <Search persons={persons} setPeopleDisplay={setPeopleDisplay} />
       <h2>Add Person</h2>
-      <AddPerson persons={persons} setPerson={setPersons} setPeopleDisplay={setPeopleDisplay} />
+      <AddPerson persons={persons} setPersons={setPersons} setPeopleDisplay={setPeopleDisplay} />
       <h2>Numbers</h2>
       <People people={peopleDisplay} />
     </div>
