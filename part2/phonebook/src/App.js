@@ -3,7 +3,8 @@ import personService from './services/persons.js'
 import './App.css'
 
 const Notification = ({ message }) => {
-  if (message === null) {
+  console.log(message == null)
+  if (message == null) {
     return null
   }
 
@@ -34,7 +35,7 @@ const People = ({ people }) => {
   )
 }
 
-const AddPerson = ({ persons, setPersons, setPeopleDisplay }) => {
+const AddPerson = ({ persons, setPersons, setPeopleDisplay, setMessage }) => {
   const [newPerson, setNewPerson] = useState(
     {
       name: "",
@@ -58,6 +59,12 @@ const AddPerson = ({ persons, setPersons, setPeopleDisplay }) => {
       personService
         .create(newPerson)
         .then(response => console.log(response))
+        .then(() => {
+          setMessage(`Added ${newPerson.name} successfully`)
+          setTimeout(() => {
+            setMessage(null)
+          }, 5000)
+        })
     }
     setNewPerson(
       {
@@ -116,7 +123,7 @@ const Search = ({ persons, setPeopleDisplay }) => {
 
 const App = () => {
   const [persons, setPersons] = useState([])
-  const [errorMessage, setErrorMessage] = useState('')
+  const [errorMessage, setErrorMessage] = useState()
   const [peopleDisplay, setPeopleDisplay] = useState([])
 
   useEffect(() => {
@@ -136,7 +143,7 @@ const App = () => {
       <h2>Search</h2>
       <Search persons={persons} setPeopleDisplay={setPeopleDisplay} />
       <h2>Add Person</h2>
-      <AddPerson persons={persons} setPersons={setPersons} setPeopleDisplay={setPeopleDisplay} />
+      <AddPerson persons={persons} setPersons={setPersons} setPeopleDisplay={setPeopleDisplay} setMessage={setErrorMessage} />
       <h2>Numbers</h2>
       <People people={peopleDisplay} />
     </div>
